@@ -1,3 +1,4 @@
+import 'package:blog_app/core/common/widgets/cubit/auth_user_cubit/auth_user_cubit.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app/features/auth/presentation/pages/login_page.dart';
 import 'package:blog_app/int_dependencies.dart';
@@ -10,6 +11,9 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
+        BlocProvider<AuthUserCubit>(
+          create: (context) => serviceLocator<AuthUserCubit>(),
+        ),
         BlocProvider<AuthBloc>(
           create: (context) => serviceLocator<AuthBloc>(),
         ),
@@ -42,7 +46,21 @@ class _LandingState extends State<Landing> {
       themeMode: ThemeMode.dark,
       theme: ThemeData.dark(),
       darkTheme: ThemeData.dark(),
-      home: const LoginPage(),
+      home: BlocSelector<AuthUserCubit, AuthUserState, bool>(
+        selector: (state) {
+          return state is AuthUserLoggedIn;
+        },
+        builder: (context, isLoggedIn) {
+          // if (isLoggedIn) {
+          //   return const Scaffold(
+          //     body: Center(
+          //       child: Text("logged in"),
+          //     ),
+          //   );
+          // }
+          return const LoginPage();
+        },
+      ),
     );
   }
 }
