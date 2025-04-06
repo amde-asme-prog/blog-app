@@ -184,7 +184,14 @@ class _AddNewBlogPageState extends State<AddNewBlogPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(5.0),
                                 child: Chip(
-                                  label: Text(e),
+                                  label: Text(
+                                    e,
+                                    style: TextStyle(
+                                      color: selectedTopics.contains(e)
+                                          ? Colors.white
+                                          : null,
+                                    ),
+                                  ),
                                   color: WidgetStatePropertyAll(
                                     selectedTopics.contains(e)
                                         ? AppPalette.gradient1

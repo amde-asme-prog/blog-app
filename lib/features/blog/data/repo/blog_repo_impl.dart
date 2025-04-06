@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:blog_app/core/error/failure.dart';
 import 'package:blog_app/core/error/server_exceptions.dart';
+import 'package:blog_app/core/network/connection_checker.dart';
 import 'package:blog_app/features/blog/data/models/blog_model.dart';
+import 'package:blog_app/features/blog/data/sources/local/blog_local_data_source.dart';
 import 'package:blog_app/features/blog/data/sources/remote/blog_remote_data_source.dart';
 import 'package:blog_app/features/blog/domain/entities/blog_entity.dart';
 import 'package:blog_app/features/blog/domain/repo/blog_repository.dart';
@@ -11,16 +13,29 @@ import 'package:fpdart/fpdart.dart';
 import 'package:uuid/uuid.dart';
 
 class BlogRepositoryImpl implements BlogRepository {
-  BlogRepositoryImpl(this.blogRemoteDataSource);
+  BlogRepositoryImpl(
+    this.blogRemoteDataSource,
+    this.blogLocalDataSource,
+    this.connectionChecker,
+  );
   final BlogRemoteDataSource blogRemoteDataSource;
+  final BlogLocalDataSource blogLocalDataSource;
+  final ConnectionChecker connectionChecker;
 
   @override
   Future<Either<Failure, List<Blog>>> getAllBlogs() async {
     try {
-      final blogs = await blogRemoteDataSource.getAllBlogs();
-      if (blogs.isEmpty) {
-        return left(Failure("Blogs not found"));
+      //*********** GET ALL LOCALLY STORED BLOGS **************
+      if (!await (connectionChecker.isConnected)) {
+        return right(blogLocalDataSource.getAllLocalBlogs());
       }
+
+      //*********** GET ALL BLOGS FROM REMOTE **************
+      final blogs = await blogRemoteDataSource.getAllBlogs();
+
+      //*********** UPLOAD LOCALLY **************
+      blogLocalDataSource.uploadBlogsLocally(blogs: blogs);
+
       return right(blogs);
     } on ServerException catch (e) {
       return left(Failure(e.message));
@@ -36,6 +51,10 @@ class BlogRepositoryImpl implements BlogRepository {
     required File image,
   }) async {
     try {
+      //*********** CHECK INTERNET CONNECTION **************
+      if (!await (connectionChecker.isConnected)) {
+        return left(Failure("No internet connection"));
+      }
       //*********** CREATE BLOG **************
       final blogModel = BlogModel(
         id: Uuid().v1(),

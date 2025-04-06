@@ -17,10 +17,6 @@ abstract interface class BlogRemoteDataSource {
     required File image,
     required String id,
   });
-
-  // Future<void> updateBlog(BlogModel blog);
-
-  // Future<void> deleteBlog(String id);
 }
 
 class BlogRemoteDataSourceImpl implements BlogRemoteDataSource {
@@ -37,6 +33,10 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource {
           .map((blog) => BlogModel.fromJson(blog)
               .copyWith(posterName: blog['profiles']['name'] as String))
           .toList();
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
     } catch (e) {
       throw ServerException(e.toString());
     }
@@ -51,6 +51,10 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource {
           await supabaseClient.from('blogs').insert(blog.toJson()).select();
 
       return BlogModel.fromJson(blogData.first);
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
     } catch (e) {
       throw ServerException(e.toString());
     }
@@ -64,6 +68,10 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource {
     try {
       await supabaseClient.storage.from('blog_images').upload(id, image);
       return supabaseClient.storage.from('blog_images').getPublicUrl(id);
+    } on StorageException catch (e) {
+      throw ServerException(e.message);
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
     } catch (e) {
       throw ServerException(e.toString());
     }
