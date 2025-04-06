@@ -1,18 +1,13 @@
-import 'package:blog_app/core/common/widgets/loading.dart';
-import 'package:blog_app/core/utils/show_snackbar.dart';
+import 'package:blog_app/core/utils/app_navigator.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:blog_app/features/auth/presentation/pages/signup_page.dart';
-import 'package:blog_app/features/auth/presentation/widgets/auth_field.dart';
-import 'package:blog_app/features/auth/presentation/widgets/auth_gradient_button.dart';
+import 'package:blog_app/features/auth/presentation/pages/sign_up_page.dart';
+import 'package:blog_app/features/auth/presentation/widgets/auth_button.dart';
+import 'package:blog_app/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LoginPage extends StatefulWidget {
-  static route() => MaterialPageRoute(
-        builder: (context) => const LoginPage(),
-      );
-
   const LoginPage({super.key});
 
   @override
@@ -20,10 +15,9 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-
-  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -35,88 +29,71 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthFailure) {
-                showSnackBar(context, state.message);
-              }
-            },
-            builder: (context, state) {
-              if (state is AuthLoading) {
-                return const Loading();
-              }
-              return Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Sign In',
-                      style: TextStyle(fontSize: 30),
-                    ),
-                    const SizedBox(height: 20),
-                    AuthTextField(
-                      hintText: "Email",
-                      controller: emailController,
-                    ),
-                    const SizedBox(height: 20),
-                    AuthTextField(
-                      hintText: "Password",
-                      controller: passwordController,
-                      obscureText: true,
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    AuthGradientButton(
-                      buttonText: "Login",
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          context.read<AuthBloc>().add(
-                                AuthLogin(
-                                  email: emailController.text,
-                                  password: passwordController.text,
-                                ),
-                              );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    RichText(
-                      text: TextSpan(
-                        text: "Don't have an account?",
-                        style: Theme.of(context).textTheme.titleMedium,
-                        children: [
-                          const WidgetSpan(
-                            child: SizedBox(
-                              width: 5,
-                            ),
-                          ),
-                          TextSpan(
-                            text: "Register",
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium!
-                                .copyWith(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => Navigator.of(context).push(
-                                    SignUpPage.route(),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: formKey,
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 15,
+              children: [
+                Text(
+                  'Sign In',
+                  style: TextStyle(
+                      fontSize:
+                          Theme.of(context).textTheme.titleLarge?.fontSize),
                 ),
-              );
-            },
-          ),
+                const SizedBox(
+                  height: 15,
+                ),
+                AuthTextField(
+                  controller: emailController,
+                  hintText: 'Email',
+                ),
+                AuthTextField(
+                  controller: passwordController,
+                  hintText: 'Password',
+                  obscureText: true,
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                AuthButton(
+                  onPressed: () {
+                    context.read<AuthBloc>().add(
+                          AuthLogin(
+                            email: emailController.text.trim().toLowerCase(),
+                            password: passwordController.text.trim(),
+                          ),
+                        );
+                  },
+                  text: 'Login',
+                ),
+                RichText(
+                  text: TextSpan(
+                    text: 'Don\'t Have an Account? ',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Sign Up',
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            AppNavigator.push(
+                              context,
+                              SignUpPage(),
+                            );
+                          },
+                      ),
+                    ],
+                  ),
+                )
+              ]),
         ),
       ),
     );
